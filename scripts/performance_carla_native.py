@@ -4,13 +4,14 @@
 # For a copy, see <https://opensource.org/licenses/MIT>.
 
 import queue
+import statistics
 import time
 
 import carla
 
 THRESHOLD = 0.001
 SKIP_TICKS = 100
-DURATION_TICKS = 250
+DURATION_TICKS = 600
 FIXED_DELTA_SECONDS = 0.05
 
 SENSORS_TIMEOUT = 1.0
@@ -194,6 +195,7 @@ def main(args=None):
 
     node = CarlaPerformanceNode(world)
 
+    _data = []
     mean_elapsed = 0
     total_frames = 0
 
@@ -235,7 +237,9 @@ def main(args=None):
             else:
                 elapsed = end_time - start_time
                 mean_elapsed = (mean_elapsed * (total_frames - SKIP_TICKS - 1) + elapsed) / (total_frames - SKIP_TICKS)
-                print(">>> {}, {}, {}".format(total_frames, elapsed, mean_elapsed)) 
+                print(">>> {}, {}, {}".format(total_frames, elapsed, mean_elapsed))
+
+                _data.append(elapsed)
 
     except Exception as e:
         print(e)
@@ -243,8 +247,9 @@ def main(args=None):
     finally:
         print(">>> FINAL RESULTS") 
         print(">>>     Duration test: {0:.4f} s ({1:.2f} ticks)".format(DURATION_TICKS*FIXED_DELTA_SECONDS, DURATION_TICKS)) 
-        print(">>>     Mean sec     : {0:.4f} s".format(mean_elapsed)) 
-        print(">>>     Mean fps     : {0:.4f} fps".format(1. / mean_elapsed if mean_elapsed > THRESHOLD else 0.)) 
+        print(">>>     Mean sec     : {0:.4f} ms".format(statistics.mean(_data) * 1000. if _data else 0.))
+        print(">>>     Std sec      : {0:.4f} ms".format(statistics.stdev(_data)* 1000. if _data else 0.))
+        print(">>>     Mean fps     : {0:.4f} fps".format(1. / statistics.mean(_data) if _data else 0.))
 
         if original_settings:
             world.apply_settings(original_settings)
