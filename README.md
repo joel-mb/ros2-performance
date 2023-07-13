@@ -4,9 +4,6 @@
 
 ```bash
 git clone --recurse-submodules https://github.com/joel-mb/ros2-performance && cd ros2-performance
-
-# Patch CARLA ROS bridge
-echo '0.9.14' > _submodules/ros-bridge/carla_ros_bridge/src/carla_ros_bridge/CARLA_VERSION
 ```
 
 ```bash

@@ -13,41 +13,17 @@ import rclpy.qos
 
 import carla
 
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, PointCloud2
 
 THRESHOLD = 0.001
 SKIP_TICKS = 100
 DURATION_TICKS = 250
 FIXED_DELTA_SECONDS = 0.05
 
-SENSORS_TIMEOUT = 0.5
+SENSORS_TIMEOUT = 1.0
 
 ##################
 ## EXPERIMENT 1 ##
-##################
-VEHICLE_CONFIGURATION = {
-    "type": "vehicle.tesla.model3",
-    "id": "ego_vehicle",
-    "sensors": [
-        {
-            "type": "sensor.camera.rgb",
-            "id": "rgb_view",
-            "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
-            "attributes": {
-                "image_size_x": 400,
-                "image_size_y": 400,
-                "fov": 90.0
-            },
-            "ros": {
-                "name": "image",
-                "msg": Image
-            }
-        }
-    ]
-}
-
-##################
-## EXPERIMENT 2 ##
 ##################
 # VEHICLE_CONFIGURATION = {
 #     "type": "vehicle.tesla.model3",
@@ -55,11 +31,11 @@ VEHICLE_CONFIGURATION = {
 #     "sensors": [
 #         {
 #             "type": "sensor.camera.rgb",
-#             "id": "rgb_view",
+#             "id": "rgb",
 #             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
 #             "attributes": {
-#                 "image_size_x": 400,
-#                 "image_size_y": 400,
+#                 "image_size_x": 1920,
+#                 "image_size_y": 1080,
 #                 "fov": 90.0
 #             },
 #             "ros": {
@@ -71,6 +47,32 @@ VEHICLE_CONFIGURATION = {
 # }
 
 ##################
+## EXPERIMENT 2 ##
+##################
+VEHICLE_CONFIGURATION = {
+    "type": "vehicle.tesla.model3",
+    "id": "ego_vehicle",
+    "sensors": [
+        {
+
+            "type": "sensor.lidar.ray_cast",
+            "id": "lidar",
+            "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+            "attributes": {
+                "range": 50,
+                "channels": 64,
+                "points_per_second": 2000000,
+                "rotation_frequency": 10
+            },
+            "ros": {
+                "name": "",
+                "msg": PointCloud2
+            }
+        }
+    ]
+}
+
+##################
 ## EXPERIMENT 3 ##
 ##################
 # VEHICLE_CONFIGURATION = {
@@ -79,16 +81,32 @@ VEHICLE_CONFIGURATION = {
 #     "sensors": [
 #         {
 #             "type": "sensor.camera.rgb",
-#             "id": "rgb_view",
+#             "id": "rgb",
 #             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
 #             "attributes": {
-#                 "image_size_x": 400,
-#                 "image_size_y": 400,
+#                 "image_size_x": 1920,
+#                 "image_size_y": 1080,
 #                 "fov": 90.0
 #             },
 #             "ros": {
 #                 "name": "image",
 #                 "msg": Image
+#             }
+#         },
+#         {
+
+#             "type": "sensor.lidar.ray_cast",
+#             "id": "lidar",
+#             "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+#             "attributes": {
+#                 "range": 50,
+#                 "channels": 64,
+#                 "points_per_second": 2000000,
+#                 "rotation_frequency": 10
+#             },
+#             "ros": {
+#                 "name": "",
+#                 "msg": PointCloud2
 #             }
 #         }
 #     ]
@@ -111,19 +129,19 @@ class ROS2PerformanceNode(rclpy.node.Node):
 
     def _setup_vehicle(self, config):
         bp = self._blueprint_library.filter(config.get("type"))[0]
-        bp.set_attribute("role_name", "ego_vehicle")
+        bp.set_attribute("role_name", config.get("id"))
         bp.set_attribute("ros_name", config.get("id")) 
 
         self.get_logger().info("Spawning vehicle...")
 
         return  self._world.spawn_actor(
-            self._blueprint_library.filter(config.get("type"))[0],
+            bp,
             self._map.get_spawn_points()[0],
             attach_to=None)
 
-    def _callback(self, data, id):
+    def _callback(self, data):
         stamp = data.header.stamp
-        self.sensors_queue.put_nowait((id, stamp.sec + stamp.nanosec*1e-9))
+        self.sensors_queue.put_nowait(stamp.sec + stamp.nanosec*1e-9)
 
     def _setup_sensors(self, vehicle, sensors_config):
         sensors = []
@@ -159,15 +177,16 @@ class ROS2PerformanceNode(rclpy.node.Node):
                 )
             )
 
-            self._world.tick()
-            self._world.tick()
-
             sensors[-1].listen(lambda data: None)
 
+            topic_name = "/carla/{}/{}".format(VEHICLE_CONFIGURATION["id"], sensor["id"])
+            if sensor["ros"]["name"]:
+                topic_name += "/" + sensor["ros"]["name"] 
+
             self.create_subscription(
-                Image,
-                "/carla/{}/{}/{}".format(VEHICLE_CONFIGURATION["id"], sensor["id"], sensor["ros"]["name"]),
-                lambda msg: self._callback(msg, sensor["id"]),
+                sensor["ros"]["msg"],
+                topic_name,
+                self._callback,
                 qos_profile=10
             )
 
@@ -209,18 +228,19 @@ def main(args=None):
         while total_frames < DURATION_TICKS:
 
             start_time = time.time()
-            frame = world.tick()
+            _ = world.tick()
             snapshot = world.get_snapshot()
 
-            received_sensors = {}
+            received_sensors = []
             while len(received_sensors) < len(VEHICLE_CONFIGURATION["sensors"]):
                 try:
-                    sensor, timestamp = node.sensors_queue.get(True, SENSORS_TIMEOUT)
-                    received_sensors[sensor] = ((frame, timestamp))
+                    timestamp = node.sensors_queue.get(True, SENSORS_TIMEOUT)
 
-                    if abs(timestamp - snapshot.timestamp.elapsed_seconds) > THRESHOLD:
-                         node.get_logger().warn("We are receiving data from a different frame: {} vs {}".format(snapshot.timestamp, timestamp))
-    
+                    if abs(timestamp - snapshot.timestamp.elapsed_seconds) < THRESHOLD:
+                        received_sensors.append(timestamp)
+                    else:
+                        node.get_logger().warn("We are receiving data from a different frame: {} vs {}".format(snapshot.timestamp.elapsed_seconds, timestamp))
+
                 except queue.Empty:
 
                     node.get_logger().warn("A sensor took too long to send their data. Frame {}".format(total_frames))
@@ -246,12 +266,10 @@ def main(args=None):
         node.get_logger().warn(e)
 
     finally:
-        # Final results
         node.get_logger().info(">>> FINAL RESULTS") 
         node.get_logger().info(">>>     Duration test: {0:.4f} s ({1:.2f} ticks)".format(DURATION_TICKS*FIXED_DELTA_SECONDS, DURATION_TICKS)) 
         node.get_logger().info(">>>     Mean sec     : {0:.4f} s".format(mean_elapsed)) 
-        node.get_logger().info(">>>     Mean fps     : {0:.4f} fps".format(1. / mean_elapsed)) 
-
+        node.get_logger().info(">>>     Mean fps     : {0:.4f} fps".format(1. / mean_elapsed if mean_elapsed > THRESHOLD else 0.)) 
 
         if original_settings:
             world.apply_settings(original_settings)
