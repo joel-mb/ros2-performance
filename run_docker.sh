@@ -7,7 +7,7 @@ if [ -z "$CARLA_ROOT" ]; then
 fi
 echo "Using the CARLA version at '$CARLA_ROOT'"
 
-docker run \
+${SCRIPT_DIR}/_utils/docker-gui \
     -it \
     --rm \
     --privileged \
@@ -18,6 +18,7 @@ docker run \
     --volume ${SCRIPT_DIR}/_config:/config \
     --volume=${SCRIPT_DIR}/scripts:/workspace/scripts:rw \
     --volume=${SCRIPT_DIR}/ws/src/performance_ros2:/workspace/ws/src/performance_ros2:rw \
+    --volume=${SCRIPT_DIR}/ws/src/rviz_performance_ros2:/workspace/ws/src/rviz_performance_ros2:rw \
     --volume=${SCRIPT_DIR}/_submodules/ros-bridge/carla_ros_bridge:/workspace/ws/src/carla_ros_bridge:rw \
     -e FASTRTPS_DEFAULT_PROFILES_FILE=/config/fastrtps-profile.xml \
     performance_ros2:latest /bin/bash

@@ -1,6 +1,6 @@
 ARG ROS_DISTRO="foxy"
 
-FROM ros:$ROS_DISTRO-ros-base
+FROM osrf/ros:$ROS_DISTRO-desktop
 
 WORKDIR /workspace
 

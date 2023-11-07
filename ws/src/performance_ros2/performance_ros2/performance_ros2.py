@@ -18,44 +18,47 @@ from sensor_msgs.msg import Image, PointCloud2
 
 THRESHOLD = 0.001
 SKIP_TICKS = 100
-DURATION_TICKS = 600
+DURATION_TICKS = 6000
 FIXED_DELTA_SECONDS = 0.05
 
-SENSORS_TIMEOUT = 1.0
+SENSORS_TIMEOUT = 10.0
 
 ##################
 ## EXPERIMENT 1 ##
-##################
-# VEHICLE_CONFIGURATION = {
-#     "type": "vehicle.tesla.model3",
-#     "id": "ego_vehicle",
-#     "sensors": [
-#         {
-#             "type": "sensor.camera.rgb",
-#             "id": "rgb",
-#             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
-#             "attributes": {
-#                 "image_size_x": 1920,
-#                 "image_size_y": 1080,
-#                 "fov": 90.0
-#             },
-#             "ros": {
-#                 "name": "image",
-#                 "msg": Image
-#             }
-#         }
-#     ]
-# }
-
-##################
-## EXPERIMENT 2 ##
 ##################
 VEHICLE_CONFIGURATION = {
     "type": "vehicle.tesla.model3",
     "id": "ego_vehicle",
     "sensors": [
         {
-
+            "type": "sensor.camera.rgb",
+            "id": "rgb1",
+            "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
+            "attributes": {
+                "image_size_x": 1920,
+                "image_size_y": 1080,
+                "fov": 90.0
+            },
+            "ros": {
+                "name": "image",
+                "msg": Image
+            }
+        },
+        {
+            "type": "sensor.camera.rgb",
+            "id": "rgb2",
+            "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
+            "attributes": {
+                "image_size_x": 1920,
+                "image_size_y": 1080,
+                "fov": 90.0
+            },
+            "ros": {
+                "name": "image",
+                "msg": Image
+            }
+        },
+        {
             "type": "sensor.lidar.ray_cast",
             "id": "lidar",
             "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
@@ -74,6 +77,32 @@ VEHICLE_CONFIGURATION = {
 }
 
 ##################
+## EXPERIMENT 2 ##
+##################
+# VEHICLE_CONFIGURATION = {
+#     "type": "vehicle.tesla.model3",
+#     "id": "ego_vehicle",
+#     "sensors": [
+#         {
+
+#             "type": "sensor.lidar.ray_cast",
+#             "id": "lidar",
+#             "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+#             "attributes": {
+#                 "range": 50,
+#                 "channels": 64,
+#                 "points_per_second": 2000000,
+#                 "rotation_frequency": 10
+#             },
+#             "ros": {
+#                 "name": "",
+#                 "msg": PointCloud2
+#             }
+#         }
+#     ]
+# }
+
+##################
 ## EXPERIMENT 3 ##
 ##################
 # VEHICLE_CONFIGURATION = {
@@ -82,7 +111,7 @@ VEHICLE_CONFIGURATION = {
 #     "sensors": [
 #         {
 #             "type": "sensor.camera.rgb",
-#             "id": "rgb",
+#             "id": "rgb1",
 #             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
 #             "attributes": {
 #                 "image_size_x": 1920,
@@ -95,9 +124,65 @@ VEHICLE_CONFIGURATION = {
 #             }
 #         },
 #         {
-
+#             "type": "sensor.camera.rgb",
+#             "id": "rgb2",
+#             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
+#             "attributes": {
+#                 "image_size_x": 1920,
+#                 "image_size_y": 1080,
+#                 "fov": 90.0
+#             },
+#             "ros": {
+#                 "name": "image",
+#                 "msg": Image
+#             }
+#         },
+#                 {
+#             "type": "sensor.camera.rgb",
+#             "id": "rgb3",
+#             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
+#             "attributes": {
+#                 "image_size_x": 1920,
+#                 "image_size_y": 1080,
+#                 "fov": 90.0
+#             },
+#             "ros": {
+#                 "name": "image",
+#                 "msg": Image
+#             }
+#         },
+#         {
+#             "type": "sensor.camera.rgb",
+#             "id": "rgb4",
+#             "spawn_point": {"x": -4.5, "y": 0.0, "z": 2.8, "roll": 0.0, "pitch": 20.0, "yaw": 0.0},
+#             "attributes": {
+#                 "image_size_x": 1920,
+#                 "image_size_y": 1080,
+#                 "fov": 90.0
+#             },
+#             "ros": {
+#                 "name": "image",
+#                 "msg": Image
+#             }
+#         },
+#         {
 #             "type": "sensor.lidar.ray_cast",
-#             "id": "lidar",
+#             "id": "lidar1",
+#             "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+#             "attributes": {
+#                 "range": 50,
+#                 "channels": 64,
+#                 "points_per_second": 2000000,
+#                 "rotation_frequency": 10
+#             },
+#             "ros": {
+#                 "name": "",
+#                 "msg": PointCloud2
+#             }
+#         },
+#         {
+#             "type": "sensor.lidar.ray_cast",
+#             "id": "lidar2",
 #             "spawn_point": {"x": 0.0, "y": 0.0, "z": 2.4, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
 #             "attributes": {
 #                 "range": 50,
@@ -178,7 +263,8 @@ class ROS2PerformanceNode(rclpy.node.Node):
                 )
             )
 
-            sensors[-1].listen(lambda data: None)
+            #sensors[-1].listen(lambda data: None)
+            sensors[-1].enable_for_ros()
 
             topic_name = "/carla/{}/{}".format(VEHICLE_CONFIGURATION["id"], sensor["id"])
             if sensor["ros"]["name"]:
@@ -253,7 +339,6 @@ def main(args=None):
             assert node.sensors_queue.empty()
 
             end_time = time.time()
-
 
             total_frames += 1
 
